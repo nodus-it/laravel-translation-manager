@@ -1,5 +1,9 @@
 **Attention: This package is in a very early stage of development. It should currently only be used for testing purposes!**
 
+[![License](https://poser.pugx.org/nodus-framework/translation-manager/license)](https://packagist.org/packages/nodus-framework/translation-manager)
+[![Latest Unstable Version](https://poser.pugx.org/nodus-framework/translation-manager/v/unstable)](https://packagist.org/packages/nodus-framework/translation-manager)
+[![Latest Stable Version](https://poser.pugx.org/nodus-framework/translation-manager/v/stable)](https://packagist.org/packages/nodus-framework/translation-manager)
+
 ## About
 TranslationManager is a package for easy management translation strings in laravel. It has the ability to perform the translation on the console or to create an export with all the strings that can later be imported again.
 
@@ -26,7 +30,7 @@ Shows all languages with count of files and values
 ```shell
 php artisan nodus:translate
 
-de: Found 1 files with 1880 values *primary locale
+de: Found 65 files with 1880 values *primary locale
 en: Found 1 files with 6 values
 ```
 

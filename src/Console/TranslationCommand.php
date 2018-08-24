@@ -60,7 +60,11 @@ class TranslationCommand extends Command
     {
         $translationManager = new TranslationManager($this->option('default-locale'));
         foreach ($translationManager->getTranslationFiles() as $lang => $namespaces) {
-            $this->info($lang . ': Found ' . count($translationManager->getTranslationFiles($lang)) . ' files with ' . count($translationManager->getTranslationValues($lang)) . ' values' . (config('app.locale',
+            $files = 0;
+            foreach($namespaces as $namespace){
+                $files += count($namespace);
+            }
+            $this->info($lang . ': Found ' . $files. ' files with ' . count($translationManager->getTranslationValues($lang)) . ' values' . (config('app.locale',
                     null) == $lang ? ' *primary locale' : ''));
         }
     }
@@ -90,14 +94,14 @@ class TranslationCommand extends Command
          */
         $file = fopen('translation_' . $translationManager->getDefaultLocale() . '-' . $translationLocale . '.csv',
             'w');
-        fputcsv($file, ['translation_string', $translationManager->getDefaultLocale(), $translationLocale]);
+        fputcsv($file, ['translation_string', $translationManager->getDefaultLocale(), $translationLocale], ';');
         foreach ($defaultLocaleValues as $key => $value) {
             if ((!array_key_exists($key, $translationLocaleValues))) {
                 fputcsv($file, [
                     $key,
                     $value,
                     ''
-                ]);
+                ], ';');
             }
         }
         fclose($file);
@@ -113,7 +117,7 @@ class TranslationCommand extends Command
             return;
         }
         $file = fopen($this->option('file'), 'r');
-        while (($line = fgetcsv($file)) !== false) {
+        while (($line = fgetcsv($file, 0, ';')) !== false) {
             if ($line[0] == 'translation_string') {
                 $translationLocale = $line[2];
             }
