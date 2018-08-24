@@ -1,0 +1,40 @@
+{
+  "name": "nodus-framework/translation-manager",
+  "description": "TranslationManager is a package for easy management translation strings in laravel. It has the ability to perform the translation on the console or to create an export with all the strings that can later be imported again.",
+  "license": "MIT",
+  "version": "0.1",
+  "type": "project",
+  "homepage": "http://www.nodus-framework.de/",
+  "keywords": [
+    "laravel",
+    "translation"
+  ],
+  "authors": [
+    {
+      "name": "Bastian Schur",
+      "email": "b.schur@nodus-framework.de",
+      "homepage": "http://www.nodus-framework.de/",
+      "role": "Main Developer"
+    }
+  ],
+  "support": {
+    "email": "support@nodus-framework.de"
+  },
+  "autoload": {
+    "psr-4": {
+      "NodusFramework\\TranslationManager\\": "src/"
+    }
+  },
+  "require": {
+    "php": ">=7.1.3",
+    "laravel/framework":"^5.5"
+
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "NodusFramework\\TranslationManager\\ServiceProvider"
+      ]
+    }
+  }
+}
