@@ -61,10 +61,10 @@ class TranslationCommand extends Command
         $translationManager = new TranslationManager($this->option('default-locale'));
         foreach ($translationManager->getTranslationFiles() as $lang => $namespaces) {
             $files = 0;
-            foreach($namespaces as $namespace){
+            foreach ($namespaces as $namespace) {
                 $files += count($namespace);
             }
-            $this->info($lang . ': Found ' . $files. ' files with ' . count($translationManager->getTranslationValues($lang)) . ' values' . (config('app.locale',
+            $this->info($lang . ': Found ' . $files . ' files with ' . count($translationManager->getTranslationValues($lang)) . ' values' . (config('app.locale',
                     null) == $lang ? ' *primary locale' : ''));
         }
     }
@@ -117,12 +117,13 @@ class TranslationCommand extends Command
             return;
         }
         $file = fopen($this->option('file'), 'r');
+        $data = [];
         while (($line = fgetcsv($file, 0, ';')) !== false) {
             if ($line[0] == 'translation_string') {
                 $translationLocale = $line[2];
             }
             if (!empty($line[2]) && $line[0] != 'translation_string') {
-                if (preg_match('/([a-z:.]{1,}::)?([a-zA-Z]{1,}).(.*)/', $line[0], $matches) !== false) {
+                if (preg_match('/([a-z:._]{1,}::)?([a-zA-Z]{1,}).(.*)/', $line[0], $matches) !== false) {
                     if (count($matches) == 3) {
                         $ns = '';
                         $translationFile = $matches[1];
@@ -135,10 +136,11 @@ class TranslationCommand extends Command
                 } else {
                     $this->warn('Parsing error:' . $line[0]);
                 }
-                array_set($data, $key, $line[2]);
-                $translationValues[$ns][$translationFile] = $data;
+                array_set($data[$ns][$translationFile], $key, $line[2]);
+                $translationValues[$ns][$translationFile] = $data[$ns][$translationFile];
             }
         }
+
         $translationManager = new TranslationManager();
         $translationManager->writeValues($translationValues, $translationLocale);
     }
