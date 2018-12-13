@@ -4,6 +4,7 @@ namespace NodusFramework\TranslationManager;
 
 use Exception;
 use Illuminate\Support\Facades\File;
+use NodusFramework\TranslationManager\Services\External\AWSTranslationService;
 
 if (!defined('DS')) {
     define('DS', DIRECTORY_SEPARATOR);
@@ -19,6 +20,10 @@ if (!defined('DS')) {
 class TranslationManager
 {
     private $defaultLocale = '';
+
+    private $automaticTranslationServices = [
+        AWSTranslationService::class,
+    ];
 
     /**
      * Create the Translation Manager an set the default locale
@@ -115,6 +120,19 @@ class TranslationManager
         return $result;
     }
 
+    public function getUntranslatedValues($sourceLocale, $targetLocale, $namespace = null)
+    {
+        $untranslatedValues = [];
+        $targetLocale = $this->getTranslationValues($targetLocale, $namespace);
+        foreach ($this->getTranslationValues($sourceLocale, $namespace) as $name => $sourceValue) {
+            if (!array_key_exists($name, $targetLocale)) {
+                $untranslatedValues[$name] = $sourceValue;
+            }
+        }
+
+        return $untranslatedValues;
+    }
+
     /**
      * Get recursisve values from a translationfile
      *
@@ -179,5 +197,44 @@ class TranslationManager
         $array = preg_replace(["/\s*array\s\($/", "/\)(,)?$/", "/\s=>\s$/"], [null, ']$1', ' => ['], $array);
         $export = join(PHP_EOL, array_filter(["["] + $array));
         file_put_contents($file, '<?php return ' . $export . ';');
+    }
+
+    public function getAutomaticTranslationServices()
+    {
+        $services = [];
+        foreach ($this->automaticTranslationServices as $translationService) {
+            if ($translationService::checkRequirements()) {
+                $services[class_basename($translationService)] = $translationService;
+            }
+        }
+        return $services;
+    }
+
+    public function write($translatedLocaleValues)
+    {
+        foreach ($translatedLocaleValues as $locale => $values) {
+            $data = [];
+            foreach ($values as $key => $value) {
+                if ($value == null) {
+                    continue;
+                }
+                if (preg_match('/([a-z:._]{1,}::)?([a-zA-Z]{1,}).(.*)/', $key, $matches) !== false) {
+                    if (count($matches) == 3) {
+                        $ns = '';
+                        $translationFile = $matches[1];
+                        $key = $matches[2];
+                    } else {
+                        $ns = substr($matches[1], 0, -2);
+                        $translationFile = $matches[2];
+                        $key = $matches[3];
+                    }
+                } else {
+                    $this->warn('Parsing error:' . $key);
+                }
+                array_set($data[$ns][$translationFile], $key, $value);
+                $translationValues[$ns][$translationFile] = $data[$ns][$translationFile];
+            }
+            $this->writeValues($translationValues, $locale);
+        }
     }
 }

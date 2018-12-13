@@ -1,5 +1,3 @@
-**Attention: This package is in a very early stage of development. It should currently only be used for testing purposes!**
-
 [![License](https://poser.pugx.org/nodus-framework/translation-manager/license)](https://packagist.org/packages/nodus-framework/translation-manager)
 [![Latest Unstable Version](https://poser.pugx.org/nodus-framework/translation-manager/v/unstable)](https://packagist.org/packages/nodus-framework/translation-manager)
 [![Latest Stable Version](https://poser.pugx.org/nodus-framework/translation-manager/v/stable)](https://packagist.org/packages/nodus-framework/translation-manager)
@@ -51,6 +49,23 @@ The import processes a CSV file according to the structure of the export. Only o
 ```shell
 php artisan nodus:translate import --file=translation_de-en.csv
 ```
+
+### Automatic translation
+This option allows you to automate your translations. An implemented provider is currently available: Amazon AWS Translate. After entering the command below, the provider and target language are queried. Subsequently, the costs for this translation are displayed and must be explicitly confirmed. Special features and requirements for the providers are listed below.
+
+```shell
+php artisan nodus:translate auto-translate
+```
+
+#### [AWS](https://aws.amazon.com/de/translate/)
+**Requirements:**
+* AWS-Account
+* Package aws/aws-sdk-php
+* ENV-Variables: NODUS_TRANSLATION_MANAGER_AWS_KEY, NODUS_TRANSLATION_MANAGER_AWS_SECRET
+
+**Costs**
+* 15$ per 1 Million Characters
+* Free Tier for 2 Millions Characters per month for 12 month after start using this service
 
 ## ToDo-List
 * Inline translation service

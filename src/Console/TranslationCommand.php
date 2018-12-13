@@ -23,7 +23,7 @@ class TranslationCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'nodus:translate {action? : Desired action: overview(default),translate,export,import}  
+    protected $signature = 'nodus:translate {action? : Desired action: overview(default),auto-translate,export,import}  
                                             {--default-locale= : Set a custom default locale}
                                             {--file= : Specify an import file}
                                             ';
@@ -34,8 +34,8 @@ class TranslationCommand extends Command
     public function handle()
     {
         switch ($this->argument('action')) {
-            case 'translate':
-                $this->translate();
+            case 'auto-translate':
+                $this->autoTranslate();
                 break;
 
             case 'export':
@@ -82,12 +82,6 @@ class TranslationCommand extends Command
             $this->warn('It is not possible to translate the default language');
             return;
         }
-        /**
-         * Prepare export values
-         */
-        $defaultLocaleValues = $translationManager->getTranslationValues($translationManager->getDefaultLocale());
-        $translationLocaleValues = $translationManager->getTranslationValues($translationLocale);
-
 
         /**
          * Create export file
@@ -95,14 +89,13 @@ class TranslationCommand extends Command
         $file = fopen('translation_' . $translationManager->getDefaultLocale() . '-' . $translationLocale . '.csv',
             'w');
         fputcsv($file, ['translation_string', $translationManager->getDefaultLocale(), $translationLocale], ';');
-        foreach ($defaultLocaleValues as $key => $value) {
-            if ((!array_key_exists($key, $translationLocaleValues))) {
-                fputcsv($file, [
-                    $key,
-                    $value,
-                    ''
-                ], ';');
-            }
+        foreach ($translationManager->getUntranslatedValues($translationManager->getDefaultLocale(),
+            $translationLocale) as $key => $value) {
+            fputcsv($file, [
+                $key,
+                $value,
+                ''
+            ], ';');
         }
         fclose($file);
     }
@@ -116,40 +109,62 @@ class TranslationCommand extends Command
             $this->warn('Pleas specify an import file');
             return;
         }
+        $translatedLocaleValues = [];
         $file = fopen($this->option('file'), 'r');
-        $data = [];
         while (($line = fgetcsv($file, 0, ';')) !== false) {
             if ($line[0] == 'translation_string') {
                 $translationLocale = $line[2];
             }
             if (!empty($line[2]) && $line[0] != 'translation_string') {
-                if (preg_match('/([a-z:._]{1,}::)?([a-zA-Z]{1,}).(.*)/', $line[0], $matches) !== false) {
-                    if (count($matches) == 3) {
-                        $ns = '';
-                        $translationFile = $matches[1];
-                        $key = $matches[2];
-                    } else {
-                        $ns = substr($matches[1], 0, -2);
-                        $translationFile = $matches[2];
-                        $key = $matches[3];
-                    }
-                } else {
-                    $this->warn('Parsing error:' . $line[0]);
-                }
-                array_set($data[$ns][$translationFile], $key, $line[2]);
-                $translationValues[$ns][$translationFile] = $data[$ns][$translationFile];
+                $translatedLocaleValues[$translationLocale][$line[0]] = $line[2];
             }
         }
+        (new TranslationManager())->write($translatedLocaleValues);
 
-        $translationManager = new TranslationManager();
-        $translationManager->writeValues($translationValues, $translationLocale);
     }
 
     /**
-     * Console translation service
+     * Auto translation by a Translation service
+     *
+     * @throws \Exception
      */
-    private function translate()
+    private function autoTranslate()
     {
-        $this->error('This function is no implemented yet');
+        $translationManager = new TranslationManager($this->option('default-locale'));
+
+        $translationServices = $translationManager->getAutomaticTranslationServices();
+        $translationService = new $translationServices[$this->choice('Which automatic translation provider should be used?',
+            array_keys($translationServices), 0)];
+        if (!in_array($translationManager->getDefaultLocale(), $translationService->getAvailableLocales())) {
+            $this->warn('Provider ' . class_basename($translationService) . ' doesn\'t support locale "' . $translationManager->getDefaultLocale() . '"');
+            return;
+        }
+
+        $translationLocale = $this->ask('In which language do you want to translate?', 'en');
+        if (!in_array($translationLocale, $translationService->getAvailableLocales())) {
+            $this->warn('Provider ' . class_basename($translationService) . ' doesn\'t support locale "' . $translationLocale . '"');
+            return;
+        }
+
+
+        $translationValues = $translationManager->getUntranslatedValues($translationManager->getDefaultLocale(),
+            $translationLocale);
+        if (!$this->confirm('This translation costs $' . $translationService->calculateCosts($translationValues) . ' Do you want to continue?')) {
+            return;
+        }
+
+        $this->info('Translating values...');
+        $progress = $this->output->createProgressBar(count($translationValues));
+        foreach ($translationValues as $name => $localeString) {
+            $translatedLocaleValues[$translationLocale][$name] = $translationService->translate($translationManager->getDefaultLocale(),
+                $translationLocale, $localeString);
+            $progress->advance();
+        }
+        $progress->finish();
+        echo "\r\n";
+
+
+        $this->info('Write values');
+        $translationManager->write($translatedLocaleValues);
     }
 }

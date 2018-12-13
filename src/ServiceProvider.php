@@ -19,5 +19,8 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
     public function register()
     {
         $this->commands(TranslationCommand::class);
+
+        $this->mergeConfigFrom(__DIR__ . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'nodus_translation_manager.php',
+            'nodus_translation_manager');
     }
 }
