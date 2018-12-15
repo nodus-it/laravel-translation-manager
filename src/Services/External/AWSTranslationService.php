@@ -3,10 +3,10 @@
 namespace NodusFramework\TranslationManager\Services\External;
 
 /**
- * Translation Manager AWS Translation Service
+ * Translation Manager AWS Translation Service.
  *
- * @package   NodusFramework\TranslationManager
  * @author    Bastian Schur <b.schur@nodus-framework.de>
+ *
  * @link      http://www.nodus-framework.de
  */
 class AWSTranslationService extends TranslationService
@@ -36,11 +36,11 @@ class AWSTranslationService extends TranslationService
         'ru',
         'es',
         'sv',
-        'tr'
+        'tr',
     ];
 
     /**
-     * Checks the Service requirements
+     * Checks the Service requirements.
      *
      * @return bool
      */
@@ -62,7 +62,7 @@ class AWSTranslationService extends TranslationService
     }
 
     /**
-     * Create or get the AWS translation client
+     * Create or get the AWS translation client.
      *
      * @return \Aws\Translate\TranslateClient|null
      */
@@ -70,52 +70,51 @@ class AWSTranslationService extends TranslationService
     {
         if ($this->translationClient == null) {
             $this->translationClient = new \Aws\Translate\TranslateClient([
-                'version' => 'latest',
-                'region' => 'eu-west-1',
+                'version'     => 'latest',
+                'region'      => 'eu-west-1',
                 'credentials' => config('nodus_translation_manager.automatic_mode.provider.aws.credentials'),
             ]);
         }
-
 
         return $this->translationClient;
     }
 
     /**
-     * Translate a locale string
+     * Translate a locale string.
      *
      * @param string $sourceLocale Source locale
      * @param string $targetLocale Target locale
      * @param string $localeString Locale string
+     *
      * @return string|null
      */
     public function translate($sourceLocale, $targetLocale, $localeString)
     {
         if (strlen($localeString) == 0) {
-            return null;
+            return;
         }
 
         $variables = [];
         preg_match_all('/:([a-z_]{1,})/m', $localeString, $matches, PREG_SET_ORDER, 0);
         foreach ($matches as $match) {
             $variables[] = $match[0];
-            $localeString = str_replace($match[0], 'NODPLHL' . count($variables), $localeString);
+            $localeString = str_replace($match[0], 'NODPLHL'.count($variables), $localeString);
         }
 
         $result = $this->getTranslationClient()->translateText([
             'SourceLanguageCode' => $sourceLocale,
             'TargetLanguageCode' => $targetLocale,
-            'TerminologyNames' => [],
-            'Text' => $localeString,
+            'TerminologyNames'   => [],
+            'Text'               => $localeString,
         ]);
 
         if ($result->get('@metadata')['statusCode'] == 200) {
             $translatedString = $result->get('TranslatedText');
             foreach ($variables as $key => $variable) {
-                $translatedString = str_replace('NODPLHL' . ($key + 1), $variable, $translatedString);
+                $translatedString = str_replace('NODPLHL'.($key + 1), $variable, $translatedString);
             }
+
             return $translatedString;
         }
-
-        return null;
     }
 }

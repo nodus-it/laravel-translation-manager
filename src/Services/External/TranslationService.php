@@ -2,12 +2,11 @@
 
 namespace NodusFramework\TranslationManager\Services\External;
 
-
 /**
- * Translation Services base class
+ * Translation Services base class.
  *
- * @package   NodusFramework\TranslationManager
  * @author    Bastian Schur <b.schur@nodus-framework.de>
+ *
  * @link      http://www.nodus-framework.de
  */
 abstract class TranslationService
@@ -17,24 +16,25 @@ abstract class TranslationService
     protected $pricePerCharacter = 0;
 
     /**
-     * Checks the Service requirements
+     * Checks the Service requirements.
      *
      * @return bool
      */
     abstract public static function checkRequirements();
 
     /**
-     * Translate a locale string
+     * Translate a locale string.
      *
      * @param string $sourceLocale Source locale
      * @param string $targetLocale Target locale
      * @param string $localeString Locale string
+     *
      * @return string|null
      */
     abstract public function translate($sourceLocale, $targetLocale, $localeString);
 
     /**
-     * Returns available locales for the provider
+     * Returns available locales for the provider.
      *
      * @return array
      */
@@ -44,9 +44,10 @@ abstract class TranslationService
     }
 
     /**
-     * Calculate the translation costs for the provider
+     * Calculate the translation costs for the provider.
      *
      * @param array $localeStrings Strings to translate
+     *
      * @return float Costs in $
      */
     public function calculateCosts($localeStrings)

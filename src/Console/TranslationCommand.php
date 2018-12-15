@@ -6,10 +6,10 @@ use Illuminate\Console\Command;
 use NodusFramework\TranslationManager\TranslationManager;
 
 /**
- * Artisan command for interact with the Translation manager
+ * Artisan command for interact with the Translation manager.
  *
- * @package   NodusFramework\TranslationManager
  * @author    Bastian Schur <b.schur@nodus-framework.de>
+ *
  * @link      http://www.nodus-framework.de
  */
 class TranslationCommand extends Command
@@ -19,7 +19,7 @@ class TranslationCommand extends Command
     protected $description = 'Handling translations';
 
     /**
-     * Name uns Signatur des Commands
+     * Name uns Signatur des Commands.
      *
      * @var string
      */
@@ -29,7 +29,7 @@ class TranslationCommand extends Command
                                             ';
 
     /**
-     * Command handler
+     * Command handler.
      */
     public function handle()
     {
@@ -54,7 +54,7 @@ class TranslationCommand extends Command
     }
 
     /**
-     * Show's an overview for translation status
+     * Show's an overview for translation status.
      */
     private function overview()
     {
@@ -64,13 +64,13 @@ class TranslationCommand extends Command
             foreach ($namespaces as $namespace) {
                 $files += count($namespace);
             }
-            $this->info($lang . ': Found ' . $files . ' files with ' . count($translationManager->getTranslationValues($lang)) . ' values' . (config('app.locale',
+            $this->info($lang.': Found '.$files.' files with '.count($translationManager->getTranslationValues($lang)).' values'.(config('app.locale',
                     null) == $lang ? ' *primary locale' : ''));
         }
     }
 
     /**
-     * Create's an csv export for translating
+     * Create's an csv export for translating.
      *
      * @throws \Exception
      */
@@ -80,13 +80,14 @@ class TranslationCommand extends Command
         $translationLocale = $this->ask('In which language do you want to translate?', 'en');
         if ($translationLocale == $translationManager->getDefaultLocale()) {
             $this->warn('It is not possible to translate the default language');
+
             return;
         }
 
         /**
-         * Create export file
+         * Create export file.
          */
-        $file = fopen('translation_' . $translationManager->getDefaultLocale() . '-' . $translationLocale . '.csv',
+        $file = fopen('translation_'.$translationManager->getDefaultLocale().'-'.$translationLocale.'.csv',
             'w');
         fputcsv($file, ['translation_string', $translationManager->getDefaultLocale(), $translationLocale], ';');
         foreach ($translationManager->getUntranslatedValues($translationManager->getDefaultLocale(),
@@ -94,19 +95,20 @@ class TranslationCommand extends Command
             fputcsv($file, [
                 $key,
                 $value,
-                ''
+                '',
             ], ';');
         }
         fclose($file);
     }
 
     /**
-     * Import's an translated csv file
+     * Import's an translated csv file.
      */
     private function import()
     {
         if ($this->option('file') == null) {
             $this->warn('Pleas specify an import file');
+
             return;
         }
         $translatedLocaleValues = [];
@@ -120,11 +122,10 @@ class TranslationCommand extends Command
             }
         }
         (new TranslationManager())->write($translatedLocaleValues);
-
     }
 
     /**
-     * Auto translation by a Translation service
+     * Auto translation by a Translation service.
      *
      * @throws \Exception
      */
@@ -134,22 +135,23 @@ class TranslationCommand extends Command
 
         $translationServices = $translationManager->getAutomaticTranslationServices();
         $translationService = new $translationServices[$this->choice('Which automatic translation provider should be used?',
-            array_keys($translationServices), 0)];
+            array_keys($translationServices), 0)]();
         if (!in_array($translationManager->getDefaultLocale(), $translationService->getAvailableLocales())) {
-            $this->warn('Provider ' . class_basename($translationService) . ' doesn\'t support locale "' . $translationManager->getDefaultLocale() . '"');
+            $this->warn('Provider '.class_basename($translationService).' doesn\'t support locale "'.$translationManager->getDefaultLocale().'"');
+
             return;
         }
 
         $translationLocale = $this->ask('In which language do you want to translate?', 'en');
         if (!in_array($translationLocale, $translationService->getAvailableLocales())) {
-            $this->warn('Provider ' . class_basename($translationService) . ' doesn\'t support locale "' . $translationLocale . '"');
+            $this->warn('Provider '.class_basename($translationService).' doesn\'t support locale "'.$translationLocale.'"');
+
             return;
         }
 
-
         $translationValues = $translationManager->getUntranslatedValues($translationManager->getDefaultLocale(),
             $translationLocale);
-        if (!$this->confirm('This translation costs $' . $translationService->calculateCosts($translationValues) . ' Do you want to continue?')) {
+        if (!$this->confirm('This translation costs $'.$translationService->calculateCosts($translationValues).' Do you want to continue?')) {
             return;
         }
 
@@ -162,7 +164,6 @@ class TranslationCommand extends Command
         }
         $progress->finish();
         echo "\r\n";
-
 
         $this->info('Write values');
         $translationManager->write($translatedLocaleValues);
