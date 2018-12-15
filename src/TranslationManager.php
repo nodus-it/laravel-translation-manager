@@ -11,10 +11,10 @@ if (!defined('DS')) {
 }
 
 /**
- * Translation manager base class
+ * Translation manager base class.
  *
- * @package   NodusFramework\TranslationManager
  * @author    Bastian Schur <b.schur@nodus-framework.de>
+ *
  * @link      http://www.nodus-framework.de
  */
 class TranslationManager
@@ -26,7 +26,7 @@ class TranslationManager
     ];
 
     /**
-     * Create the Translation Manager an set the default locale
+     * Create the Translation Manager an set the default locale.
      *
      * @param null $defaultLocale
      */
@@ -39,7 +39,7 @@ class TranslationManager
     }
 
     /**
-     * Get the default locale
+     * Get the default locale.
      *
      * @return string
      */
@@ -49,7 +49,7 @@ class TranslationManager
     }
 
     /**
-     * Get all registered translation namespaces from laravel
+     * Get all registered translation namespaces from laravel.
      *
      * @return array
      */
@@ -59,7 +59,7 @@ class TranslationManager
     }
 
     /**
-     * Returns the translation filepaths with lang and namespace as key
+     * Returns the translation filepaths with lang and namespace as key.
      *
      * @return array $result[$lang][$namespace][$filePath1,$filePath2..]
      */
@@ -72,7 +72,7 @@ class TranslationManager
             }
             if (File::isDirectory($translationPath)) {
                 foreach (File::directories($translationPath) as $dir) {
-                    $l = str_replace($translationPath . DS, '', $dir);
+                    $l = str_replace($translationPath.DS, '', $dir);
                     if ($locale != null && $locale != $l) {
                         continue;
                     }
@@ -87,13 +87,14 @@ class TranslationManager
     }
 
     /**
-     * Returns all translation values for a file
+     * Returns all translation values for a file.
      *
-     * @param string $file Translation file
+     * @param string $file      Translation file
      * @param string $namespace Namespace prefix
      *
-     * @return array Array with translation values and usage key as key
      * @throws Exception Throws exception if an translationfile contains not an array
+     *
+     * @return array Array with translation values and usage key as key
      */
     public function getTranslationValues($locale = null, $namespace = null)
     {
@@ -109,10 +110,10 @@ class TranslationManager
                 foreach ($files as $file) {
                     $values = require $file;
                     if (!is_array($values)) {
-                        throw new Exception('Invalid translation file "' . $file . '"');
+                        throw new Exception('Invalid translation file "'.$file.'"');
                     }
                     $result = array_merge($result,
-                        $this->getValues($values, ($ns == '') ? '' : $ns . '::' . pathinfo($file)['filename'] . '.'));
+                        $this->getValues($values, ($ns == '') ? '' : $ns.'::'.pathinfo($file)['filename'].'.'));
                 }
             }
         }
@@ -134,9 +135,9 @@ class TranslationManager
     }
 
     /**
-     * Get recursisve values from a translationfile
+     * Get recursisve values from a translationfile.
      *
-     * @param array $values Translation values array
+     * @param array  $values Translation values array
      * @param string $prefix Prefix
      *
      * @return array Array with translation values
@@ -146,11 +147,11 @@ class TranslationManager
         $result = [];
         foreach ($values as $key => $value) {
             if (is_array($value)) {
-                foreach ($this->getValues($value, $key . '.') as $key => $value) {
-                    $result[$prefix . $key] = $value;
+                foreach ($this->getValues($value, $key.'.') as $key => $value) {
+                    $result[$prefix.$key] = $value;
                 }
             } else {
-                $result[$prefix . $key] = $value;
+                $result[$prefix.$key] = $value;
             }
         }
 
@@ -158,9 +159,9 @@ class TranslationManager
     }
 
     /**
-     * Write the values to translation file
+     * Write the values to translation file.
      *
-     * @param array $translationValues Array with translated values
+     * @param array  $translationValues Array with translated values
      * @param string $translationLocale Locale
      */
     public function writeValues($translationValues, $translationLocale)
@@ -169,10 +170,10 @@ class TranslationManager
         foreach ($translationValues as $ns => $files) {
             if (array_key_exists($ns, $namespaces)) {
                 foreach ($files as $fileName => $values) {
-                    if (!File::exists($namespaces[$ns] . DS . $translationLocale)) {
-                        File::makeDirectory($namespaces[$ns] . DS . $translationLocale);
+                    if (!File::exists($namespaces[$ns].DS.$translationLocale)) {
+                        File::makeDirectory($namespaces[$ns].DS.$translationLocale);
                     }
-                    $this->writeFile($namespaces[$ns] . DS . $translationLocale . DS . $fileName . '.php', $values);
+                    $this->writeFile($namespaces[$ns].DS.$translationLocale.DS.$fileName.'.php', $values);
                 }
             } else {
                 echo 'FEHLER';
@@ -181,10 +182,10 @@ class TranslationManager
     }
 
     /**
-     * Creates the translation file with values
+     * Creates the translation file with values.
      *
-     * @param string $file Translation file
-     * @param array $values Values
+     * @param string $file   Translation file
+     * @param array  $values Values
      */
     private function writeFile($file, $values)
     {
@@ -192,11 +193,11 @@ class TranslationManager
             $values = array_merge(require $file, $values);
         }
         $export = var_export($values, true);
-        $export = preg_replace("/^([ ]*)(.*)/m", '$1$1$2', $export);
+        $export = preg_replace('/^([ ]*)(.*)/m', '$1$1$2', $export);
         $array = preg_split("/\r\n|\n|\r/", $export);
         $array = preg_replace(["/\s*array\s\($/", "/\)(,)?$/", "/\s=>\s$/"], [null, ']$1', ' => ['], $array);
-        $export = join(PHP_EOL, array_filter(["["] + $array));
-        file_put_contents($file, '<?php return ' . $export . ';');
+        $export = implode(PHP_EOL, array_filter(['['] + $array));
+        file_put_contents($file, '<?php return '.$export.';');
     }
 
     public function getAutomaticTranslationServices()
@@ -207,6 +208,7 @@ class TranslationManager
                 $services[class_basename($translationService)] = $translationService;
             }
         }
+
         return $services;
     }
 
@@ -229,7 +231,7 @@ class TranslationManager
                         $key = $matches[3];
                     }
                 } else {
-                    $this->warn('Parsing error:' . $key);
+                    $this->warn('Parsing error:'.$key);
                 }
                 array_set($data[$ns][$translationFile], $key, $value);
                 $translationValues[$ns][$translationFile] = $data[$ns][$translationFile];
