@@ -1,6 +1,7 @@
 [![License](https://poser.pugx.org/nodus-framework/translation-manager/license)](https://packagist.org/packages/nodus-framework/translation-manager)
 [![Latest Unstable Version](https://poser.pugx.org/nodus-framework/translation-manager/v/unstable)](https://packagist.org/packages/nodus-framework/translation-manager)
 [![Latest Stable Version](https://poser.pugx.org/nodus-framework/translation-manager/v/stable)](https://packagist.org/packages/nodus-framework/translation-manager)
+[![StyleCI](https://github.styleci.io/repos/145977361/shield?branch=master)](https://github.styleci.io/repos/145977361)
 
 ## About
 TranslationManager is a package for easy management translation strings in laravel. It has the ability to perform the translation on the console or to create an export with all the strings that can later be imported again.

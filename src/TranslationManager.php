@@ -220,7 +220,7 @@ class TranslationManager
                 if ($value == null) {
                     continue;
                 }
-                if (preg_match('/([a-z:._]{1,}::)?([a-zA-Z]{1,}).(.*)/', $key, $matches) !== false) {
+                if (preg_match('/([a-z:._]{1,}::)?([a-zA-Z_-]{1,}).(.*)/', $key, $matches) !== false) {
                     if (count($matches) == 3) {
                         $ns = '';
                         $translationFile = $matches[1];
