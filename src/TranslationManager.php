@@ -3,8 +3,10 @@
 namespace NodusFramework\TranslationManager;
 
 use Exception;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\File;
 use NodusFramework\TranslationManager\Services\External\AWSTranslationService;
+use NodusFramework\TranslationManager\Services\External\TranslationService;
 
 if (!defined('DS')) {
     define('DS', DIRECTORY_SEPARATOR);
@@ -19,8 +21,18 @@ if (!defined('DS')) {
  */
 class TranslationManager
 {
-    private $defaultLocale = '';
+    /**
+     * Default locale
+     *
+     * @var string|null
+     */
+    private $defaultLocale;
 
+    /**
+     * Available automatic translation services
+     *
+     * @var string[]|TranslationService[]
+     */
     private $automaticTranslationServices = [
         AWSTranslationService::class,
     ];
@@ -28,13 +40,14 @@ class TranslationManager
     /**
      * Create the Translation Manager an set the default locale.
      *
-     * @param null $defaultLocale
+     * @param string|null $defaultLocale
      */
-    public function __construct($defaultLocale = null)
+    public function __construct(?string $defaultLocale = null)
     {
         if ($defaultLocale == null) {
             $defaultLocale = config('app.locale', 'en');
         }
+
         $this->defaultLocale = $defaultLocale;
     }
 
@@ -61,9 +74,12 @@ class TranslationManager
     /**
      * Returns the translation filepaths with lang and namespace as key.
      *
+     * @param string|null $locale
+     * @param string|null $namespace
+     *
      * @return array $result[$lang][$namespace][$filePath1,$filePath2..]
      */
-    public function getTranslationFiles($locale = null, $namespace = null)
+    public function getTranslationFiles(?string $locale = null, ?string $namespace = null)
     {
         $translationFiles = [];
         foreach ($this->getNamespaces() as $ns => $translationPath) {
@@ -89,14 +105,13 @@ class TranslationManager
     /**
      * Returns all translation values for a file.
      *
-     * @param string $file      Translation file
-     * @param string $namespace Namespace prefix
-     *
-     * @throws Exception Throws exception if an translationfile contains not an array
+     * @param string|null $locale    Locale
+     * @param string|null $namespace Namespace prefix
      *
      * @return array Array with translation values and usage key as key
+     * @throws Exception Throws exception if an translationfile contains not an array
      */
-    public function getTranslationValues($locale = null, $namespace = null)
+    public function getTranslationValues(?string $locale = null, ?string $namespace = null)
     {
         $result = [];
         foreach ($this->getTranslationFiles($locale, $namespace) as $l => $namespaces) {
@@ -112,8 +127,10 @@ class TranslationManager
                     if (!is_array($values)) {
                         throw new Exception('Invalid translation file "'.$file.'"');
                     }
-                    $result = array_merge($result,
-                        $this->getValues($values, ($ns == '') ? '' : $ns.'::'.pathinfo($file)['filename'].'.'));
+                    $result = array_merge(
+                        $result,
+                        $this->getValues($values, ($ns == '') ? '' : $ns.'::'.pathinfo($file)['filename'].'.')
+                    );
                 }
             }
         }
@@ -121,7 +138,7 @@ class TranslationManager
         return $result;
     }
 
-    public function getUntranslatedValues($sourceLocale, $targetLocale, $namespace = null)
+    public function getUntranslatedValues(string $sourceLocale, string $targetLocale, ?string $namespace = null)
     {
         $untranslatedValues = [];
         $targetLocale = $this->getTranslationValues($targetLocale, $namespace);
@@ -142,7 +159,7 @@ class TranslationManager
      *
      * @return array Array with translation values
      */
-    private function getValues($values, $prefix)
+    private function getValues(array $values, string $prefix)
     {
         $result = [];
         foreach ($values as $key => $value) {
@@ -164,7 +181,7 @@ class TranslationManager
      * @param array  $translationValues Array with translated values
      * @param string $translationLocale Locale
      */
-    public function writeValues($translationValues, $translationLocale)
+    public function writeValues(array $translationValues, string $translationLocale)
     {
         $namespaces = $this->getNamespaces();
         foreach ($translationValues as $ns => $files) {
@@ -187,7 +204,7 @@ class TranslationManager
      * @param string $file   Translation file
      * @param array  $values Values
      */
-    private function writeFile($file, $values)
+    private function writeFile(string $file, array $values)
     {
         if (File::exists($file)) {
             $values = array_merge(require $file, $values);
@@ -197,7 +214,7 @@ class TranslationManager
         $array = preg_split("/\r\n|\n|\r/", $export);
         $array = preg_replace(["/\s*array\s\($/", "/\)(,)?$/", "/\s=>\s$/"], [null, ']$1', ' => ['], $array);
         $export = implode(PHP_EOL, array_filter(['['] + $array));
-        file_put_contents($file, '<?php return '.$export.';');
+        file_put_contents($file, "<?php\n\nreturn ".$export.';');
     }
 
     public function getAutomaticTranslationServices()
@@ -212,14 +229,16 @@ class TranslationManager
         return $services;
     }
 
-    public function write($translatedLocaleValues)
+    public function write(array $translatedLocaleValues)
     {
+        $translationValues = [];
         foreach ($translatedLocaleValues as $locale => $values) {
             $data = [];
             foreach ($values as $key => $value) {
                 if ($value == null) {
                     continue;
                 }
+
                 if (preg_match('/([a-z:._]{1,}::)?([a-zA-Z_-]{1,}).(.*)/', $key, $matches) !== false) {
                     if (count($matches) == 3) {
                         $ns = '';
@@ -231,9 +250,10 @@ class TranslationManager
                         $key = $matches[3];
                     }
                 } else {
-                    $this->warn('Parsing error:'.$key);
+                    throw new Exception('Parsing error:'.$key);
                 }
-                array_set($data[$ns][$translationFile], $key, $value);
+
+                Arr::set($data[$ns][$translationFile], $key, $value);
                 $translationValues[$ns][$translationFile] = $data[$ns][$translationFile];
             }
             $this->writeValues($translationValues, $locale);
