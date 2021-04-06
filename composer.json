@@ -33,7 +33,7 @@
     "laravel/framework": ">=5.5"
   },
   "require-dev": {
-    "aws/aws-sdk-php": "3.9.*"
+    "aws/aws-sdk-php": "3.*"
   },
   "suggest": {
     "aws/aws-sdk-php": "Allows automatic translation by aws service"
